@@ -58,18 +58,11 @@ def send_img(path):
 
 
 # TODO test the: request.authorization.username
-@app.route("/request-event")
-def event():
-    # Query arguments are accessable with request.args.get
-    #user = request.args.get("user")
-    # And headers with:
-    #h = request.headres["start"]
+@app.route("/request-event", methods=["POST"])
+def event_request():
+    event = request.get_json()
+    return(event)
 
-    
-    if "start" in request.headers:
-        return(request.headers["start"])
-    else:
-        return("NO")
 
 if __name__ == "__main__":
     app.run("0.0.0.0", debug=True)
