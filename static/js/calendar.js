@@ -7,6 +7,30 @@
 
 
 
+
+
+
+/**
+ * Send HTTP GET request with callback function
+ */
+ var HttpClient = function() {
+    this.get = function(url, callback) {
+        var httpRequest = new XMLHttpRequest();
+        httpRequest.onreadystatechange = function() { 
+            if (httpRequest.readyState == 4 && httpRequest.status == 200){
+                callback(httpRequest.responseText);
+            }
+        }
+
+        httpRequest.open( "GET", url, true );            
+        httpRequest.setRequestHeader("start", "now");
+        httpRequest.send( null );
+    }
+}
+
+
+
+
 // -------------------------------------------------
 // Navigation setup
 // -------------------------------------------------
@@ -200,10 +224,12 @@ dp.onTimeRangeSelected = async args => {
 
     // TODO: fill in the username by user login credentials
 
-    // Send request to the server
-    // TODO
 
-    dp.events.add(e);
+    var client = new HttpClient();
+        //client.get("/request-event?user=admin", function(response){
+        client.get("/request-event", function(response){
+        console.log(response);
+    });
 };
 
 
