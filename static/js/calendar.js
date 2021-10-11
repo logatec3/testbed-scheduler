@@ -213,6 +213,7 @@ dp.onTimeRangeSelected = async args => {
         start: modal.result.start,
         end: modal.result.end,
         id: DayPilot.guid(),
+        // TODO: fill in the username by user login credentials
         text: "Some user",
         tags: {
             radioType: modal.result.radioType,
@@ -220,14 +221,15 @@ dp.onTimeRangeSelected = async args => {
         }
     });
 
+    console.log(e.data);
+
     
 
-    // TODO: fill in the username by user login credentials
 
 
     var client = new HttpClient();
         //client.get("/request-event?user=admin", function(response){
-        client.get("/request-event", e, function(response){
+        client.get("/request-event", e.data, function(response){
         console.log(response); // TODO: tags are not returned ...
     });
 };
