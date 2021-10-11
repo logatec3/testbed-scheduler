@@ -1,12 +1,8 @@
 /**
- * DayPilot library. It is awesome but in lite version
+ * DayPilot library. It is awesome but in lite version:
  * Tags are not working
  * Regex expression fails at modal - cannot use modal as input data :/
  */
-
-
-
-
 
 
 
@@ -86,24 +82,6 @@ dp.showToolTip = "True";
 //dp.timeRangeSelectedHandling = "Disabled";
 
 
-
-
-// generate and load dummy events
-/*
-for (var i = 0; i < 10; i++) {
-    var duration = Math.floor(Math.random() * 1.2);
-    var start = Math.floor(Math.random() * 6) - 3; // -3 to 3
-
-    var e = new DayPilot.Event({
-        start: new DayPilot.Date("2021-10-04T00:00:00").addDays(start),
-        end: new DayPilot.Date("2021-10-04T12:00:00").addDays(start).addDays(duration),
-        id: DayPilot.guid(),
-        text: "Event " + i
-    });
-    dp.events.add(e);
-}
-*/
-
 // Dummy event
 var ev = new DayPilot.Event({
     start: new DayPilot.Date("2021-10-04T00:00:00"),
@@ -158,46 +136,6 @@ dp.onTimeRangeSelected = async args => {
         {name: "Radio type", id: "radioType", options: device_types},
     ];
 
-
-/*
-    const input_data = [
-        {name: args.start, id:"start"},
-        {name: args.end, id:"end"}
-    ];
-    const form = [
-        {name: "Send request for resource reservation"}, // - choose date and device type and click OK."},
-
-        {
-            type: "table",
-            id: "t1",
-            columns: [
-                {name: "From", id: "start", dateFormat: "MMMM d, yyyy", options: input_data},
-                {
-                    name: "To",
-                    id: "end",
-                    dateFormat: "MMMM d, yyyy", 
-                }
-            ]
-        },
-        {name: "From", id: "start", dateFormat: "MMMM d, yyyy", disabled: true},
-        //{name: "To", id: "end", dateFormat: "MMMM d, yyyy", disabled: true},
-        //{name: "From", id: "start", dateFormat:"dd.MM.yyyy - hh:mm"},
-        //{name: "To", id: "end", dateFormat:"dd.MM.yyyy - hh:mm"},
-        //{name: "From", id: "start", dateFormat:"MM d, yyyy"},
-        //{name: "To", id: "end", dateFormat:"MM d, yyyy"},
-        {name: "Radio type", id: "radioType", options: device_types},
-    ];
-
-    */
-/*
-    DayPilot.Modal.form(form, data, options).then(function(args){
-        if(!args.canceled){
-            console.log("data", args.result);
-        }
-    });
-*/
-
-
     // Prompt modal to the user and wait for completion
     
     const modal = await DayPilot.Modal.form(form, data, options);
@@ -224,8 +162,6 @@ dp.onTimeRangeSelected = async args => {
     console.log(e.data);
 
     
-
-
 
     var client = new HttpClient();
         //client.get("/request-event?user=admin", function(response){
