@@ -40,9 +40,9 @@
     }
 }
 
-// -------------------------------------------------
+// --------------------------------------------------------------------------------------------------
 // Navigation setup
-// -------------------------------------------------
+// --------------------------------------------------------------------------------------------------
 var nav = new DayPilot.Navigator("nav");
 nav.showMonths = 3;
 nav.selectMode = "month";
@@ -53,9 +53,9 @@ nav.onTimeRangeSelected = function(args) {
 nav.init();
 
 
-// -------------------------------------------------
+// --------------------------------------------------------------------------------------------------
 // Month calendar setup
-// -------------------------------------------------
+// --------------------------------------------------------------------------------------------------
 var dp = new DayPilot.Month("dp");
 
 // Set the day to today
@@ -138,27 +138,18 @@ dp.onTimeRangeSelected = async args => {
 /**
  * Modal for event info
  */
-dp.onEventClick = function(args) {
+ dp.onEventClick = async args => {
 
-    var s = args.e.start(),
-        e = args.e.end(),
-        j = args.e.id();
-
-    // TODO: 
-    // Event tags are not working - function returns NULL :|
-    // can not obtain radio type name for modal display :/
-    // Can not display wether the reservation is pending or if it is confirmed :(
-    console.log(args.e.tag["status"]);
-    console.log(args.e.tag("radio_type"));
-
-
-    var message = "Testbed resources already reserved from " + s + " to " + e;
+    var ev = args.e.data;
+    if(ev.tags.status === "pending"){
+        var message = "Waiting for admin conformation.";
+    }
+    else{
+        var message = ev.tags.radio_type + " testbed resources reserved from " + ev.start + " to " + ev.end;
+    }
     //message += "For more info contact the administrator.";
     var modal = new DayPilot.Modal.alert(message);
 };
-
-
-
 
 
 /**
@@ -218,7 +209,6 @@ dp.onBeforeEventRender = args => {
 	default:
 	    break;
     }
-
     
     switch(status) {
         case "pending":
@@ -239,16 +229,18 @@ dp.onBeforeEventRender = args => {
 
 
 
-
-
+// --------------------------------------------------------------------------------------------------
 // Init calendar
+// --------------------------------------------------------------------------------------------------
 dp.init();
-
 // Update calendar from servers database
 loadExistingEvents();
 
 
 
+// --------------------------------------------------------------------------------------------------
+// Additional functions 
+// --------------------------------------------------------------------------------------------------
 /**
  * Function returns the stored events from server database.
  */
