@@ -1,12 +1,39 @@
 #!/usr/bin/python3
 
+
+# Avtentikacija:
+# * session coockie:    request.cookies.get("connect.sid")
+# * API Token
+    # You can test the: request.authorization.username oz morbt request.headers.authorization
+    # V bazi podatkov je ta token shranjen poleg uporabnika (users)
+
+# Na konci me zafrkava to shranjevanje eventov v bazo podatkov
+# ogotovu, da bom mogu mal spremenit:
+
+"""
+V bazi podatkov nej bo:
+
+user_name:
+request_date:
+confirmed_by:
+event:
+    start
+    end
+    tags:
+        status
+        radio_type
+
+
+In na spletni strani nej bo viden sam ta event
+"""
+
 import logging
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 import dateutil.parser
 
 from pymongo import MongoClient
 
-from flask import Flask, render_template, send_from_directory, request
+from flask import Flask, render_template, send_from_directory, jsonify, request
 from flask.helpers import url_for
 
 
@@ -40,48 +67,86 @@ resource_events = db["reserved_resources"]
 
 # TODO - delete me ---> Dummy event to create collection
 admin = users.find_one({"username":"admin"}) #,{"username":1, "type":1, "_id":0})
-e_start = datetime(2021, 10, 11).isoformat()
-e_end   = datetime(2021, 10, 15).isoformat()
+e_start = datetime(2021, 10, 6).isoformat()
+e_end   = datetime(2021, 10, 7).isoformat()
 
-dummy_event = {"user":admin, "start":e_start, "stop":e_end, "radio_type":"SRDA", "status":"confirmed"}
-resource_events.insert_one(dummy_event)
+dummy_event = {"start":e_start, "end":e_end, "tags":{"radio_type":"SRDA", "status":"confirmed"}}
+dummy_resource = {"user_name":admin, "request_date":e_start, "confirmed_by":"none", "event":dummy_event}
 
-
-
-
+#resource_events.insert_one(dummy_resource)
 
 
 
-# Return a list of reserved events by given type from the database
-def getReservedEvents(radio_type):
+# Return a list of reserved events from database
+def getReservedEvents():
     events = db["reserved_resources"]
     event_list = []
 
-    for x in events.find({"radio_type":radio_type}):
-        event_list.append(x)
+    for e in events.find():
+        event_list.append(e.get("event",{}))
 
     return event_list
 
 
+
+
+# Return a list of reserved resources by given type from the database
+def getReservedResources(radio_type):
+    resources = db["reserved_resources"]
+    resources_list = []
+
+    for r in resources.find({"event.tags.radio_type":radio_type}):
+        resources_list.append(r)
+
+    return resources_list
+
+
 # Return True if new_event is not overlaping with others
-def isResourceFree(new_event):
+def isResourceFree(new_resource):
 
     # Get all events
-    event_type = new_event.get("tags", {}).get("radio_type")
-    events = getReservedEvents(event_type)
+    print(new_resource)
+    event_type = new_resource.get("event", {}).get("tags", {}).get("radio_type")
+    #event_type = new_resource["event"]["tags"]["radio_type"]
+    resources = getReservedResources(event_type)
 
     # Add new one
-    events.append(new_event)
+    resources.append(new_resource)
+    #print(resources)
 
     # Sort them by start time
-    sorted_events = sorted(events, key = lambda d: d["start"])
-
+    sorted_resources = sorted(resources, key = lambda d: d["event"]["start"])
+    print("Sorted resurces ..... ")
+    print(sorted_resources)
     # Check for overlaping
-    for i in range(1, len(sorted_events)):
-        if sorted_events[i - 1]["end"] >= sorted_events[i]["start"]:
+    for i in range(1, len(sorted_resources)):
+        if sorted_resources[i - 1].get("event",{}).get("end",{}) >= sorted_resources[i].get("event",{}).get("start",{}):
             return False
 
     return True
+
+
+def checkRequestedEvent(event):
+    
+    #1 Check if in the past
+    if event["start"] < datetime.now().isoformat():
+        return "Can't reserve resources in the past"
+    
+    #2 Check if start is more than half a year in the future
+    halfyear = datetime.now() + timedelta(30 * 6)
+    halfyear = halfyear.isoformat()
+    if event["start"] > halfyear:
+        return "Reservation possible max 6 months in advanced"
+    
+    #3 Max 7 days of reservation
+    week = dateutil.parser.isoparse(event["start"])
+    week = week + timedelta(days=7)
+    week = week.isoformat()
+    if (event["end"] > week):
+        return "Reservation possible for max 7 days"
+    return "success"
+
+
 
 
 
@@ -113,30 +178,46 @@ def send_img(path):
 def event_request():
     event = request.get_json()
 
-    #1 Check if start in the past
-    if event["start"] < datetime.now().isoformat():
-        return("Don't fiddle with the past")
-    
-    #2 Check if start is more than half a year in the future
-    halfyear = datetime.now() + timedelta(30 * 6)
-    halfyear = halfyear.isoformat()
-    if event["start"] > halfyear:
-        return("Can't see into the future")
-    
-    #3 Max 7 days of reservation
-    week = dateutil.parser.isoparse(event["start"])
-    week = week + timedelta(days=7)
-    week = week.isoformat()
-    if (event["end"] > week):
-        return("Max 7 days")
-  
-    #4 Check if the event is not overlaping with others
-    if (isResourceFree(event)):
-        return(event)
-    else:
-        return("The resources are already reserved for that event")
+    # Testing
+    #user_token = request.authorization.username
+    # print(user_token)
+    print("Cookies: ")
+    print(request.cookies.get("connect.sid"))
 
-    # TODO test the: request.authorization.username
+    # If event timings are within desired parameters
+    resp = checkRequestedEvent(event)
+
+    # If resources are free
+    if(resp == "success"):  
+        now = datetime.now().isoformat()
+        resource = {"user_name":"nekUser", "request_date":now, "confirmed_by": "none", "event": event}
+        
+        if (isResourceFree(resource)):
+
+            print("----Tip resource variable")
+            print(type(resource))
+
+            db["reserved_resources"].insert_one(resource)
+            for i in resource_events.find():
+                print(i)
+        else:
+            resp = "The resources are already reserved for that event"
+    print("response is " + resp)
+    
+    return jsonify(
+        response_message = resp,
+        #response_event = event,
+    )
+
+@app.route("/update", methods=["POST"])
+def update_calendar():
+    r = request.get_json()
+    print(r)
+
+    events = getReservedEvents()
+
+    return jsonify(events)
+
 
 if __name__ == "__main__":
     app.run("0.0.0.0", debug=True)

@@ -18,7 +18,7 @@
             }
         }
 
-        httpRequest.open( "POST", url, true );            
+        httpRequest.open("POST", url, true );            
         httpRequest.setRequestHeader("Content-Type", "application/json");
         httpRequest.send(JSON.stringify(data));
     }
@@ -54,7 +54,7 @@ nav.init();
     "id": "cb122202-5263-f467-73b3-643e4683bbc7",
     "text": "USERNAME",
     "tags": {
-        "radioType": "SRDA",
+        "radio_type": "SRDA",
         "status": "pending"/"confirmed",
     }
 }
@@ -89,11 +89,12 @@ var ev = new DayPilot.Event({
     id: DayPilot.guid(),
     text: "test1",
     tags: {
-        radioType : "SRDB",
+        radio_type : "SRDB",
         status : "confirmed"
     },
-    toolTip : "sdaasdasdasd",
 });
+console.log("Tuki");
+console.log(ev);
 dp.events.add(ev);
 
 
@@ -114,15 +115,13 @@ dp.onTimeRangeSelected = async args => {
         {name: "BLE", id: "BLE"},
     ];
 
-    
-
     const data = {
         start: args.start,
         end: args.end,
     };
 
     const options = {
-        focus: "radioType"
+        focus: "radio_type"
     };
 
     const form = [
@@ -133,11 +132,10 @@ dp.onTimeRangeSelected = async args => {
         //{name: "To", id: "end", dateFormat:"dd.MM.yyyy - hh:mm"},
         //{name: "From", id: "start", dateFormat:"MM d, yyyy"},
         //{name: "To", id: "end", dateFormat:"MM d, yyyy"},
-        {name: "Radio type", id: "radioType", options: device_types},
+        {name: "Radio type", id: "radio_type", options: device_types},
     ];
 
     // Prompt modal to the user and wait for completion
-    
     const modal = await DayPilot.Modal.form(form, data, options);
 
     dp.clearSelection();
@@ -145,28 +143,38 @@ dp.onTimeRangeSelected = async args => {
         return;
     }
 
-    console.log(modal.result);
+    //console.log(modal.result);
 
     var e = new DayPilot.Event({
         start: modal.result.start,
         end: modal.result.end,
         id: DayPilot.guid(),
         // TODO: fill in the username by user login credentials
-        text: "Some user",
+        text: modal.result.radio_type,
         tags: {
-            radioType: modal.result.radioType,
+            radio_type: modal.result.radio_type,
             status: "pending"
         }
     });
 
-    console.log(e.data);
-
-    
-
+    //console.log(e.data);
     var client = new HttpClient();
+
         //client.get("/request-event?user=admin", function(response){
-        client.get("/request-event", e.data, function(response){
-        console.log(response); // TODO: tags are not returned ...
+
+        client.get("/request-event", e.data, function(args){
+
+            var response = JSON.parse(args);
+            var message = response["response_message"];
+
+            if (message !== "success"){
+                var modal = new DayPilot.Modal.alert(message)
+            }
+            else{
+                dp.events.add(e);
+                //dp.events.add(response["response_event"]);
+                dp.update();
+            }
     });
 };
 
@@ -179,14 +187,14 @@ dp.onEventClick = function(args) {
 
     var s = args.e.start(),
         e = args.e.end(),
-        i = args.e.id();
+        j = args.e.id();
 
     // TODO: 
     // Event tags are not working - function returns NULL :|
     // can not obtain radio type name for modal display :/
     // Can not display wether the reservation is pending or if it is confirmed :(
     console.log(args.e.tag["status"]);
-    console.log(args.e.tag("radioType"));
+    console.log(args.e.tag("radio_type"));
 
 
     var message = "Testbed resources already reserved from " + s + " to " + e;
@@ -201,10 +209,15 @@ dp.onEventClick = function(args) {
 /**
  * Callback function to modify the events theme and colours
  */
-dp.onBeforeEventRender = function(args) {
-    var type = args.data.tags && args.data.tags.radioType;
-    var status = args.data.tags && args.data.tags.status;
+//dp.onBeforeEventRender = function(args) {
+dp.onBeforeEventRender = args => {
 
+    var type = args.data.tags && args.data.tags.radio_type;
+    var status = args.data.tags && args.data.tags.status;
+	
+	console.log("\n\n -----------------------------------------------\n\n");
+	console.log(type);
+	console.log(status);
     switch (type) {
         case "SRDA":
             if(status === "confirmed"){
@@ -250,6 +263,8 @@ dp.onBeforeEventRender = function(args) {
                 args.data.backColor = "#d5c1d7";
             }
             break;
+	default:
+	    break;
     }
 
     
@@ -257,15 +272,17 @@ dp.onBeforeEventRender = function(args) {
         case "pending":
             args.data.fontColor = "#5e6a6e";
             args.data.borderColor = "#5e6a6e";
-            args.data.toolTip = "Waiting for administrator conformation"
+            args.data.toolTip = "Type: " + args.data.tags.radio_type + " | Waiting for admin conformation."
             break;
 
         case "confirmed":
             args.data.fontColor = "black";
             args.data.borderColor = "black";
-            args.data.toolTip = "Resource already reserved from: " + args.data.start;
+            args.data.toolTip = "Type: " + args.data.tags.radio_type + " | Resource already reserved from: " + args.data.start + " to " + args.data.end + ".";
             break;
-    };    
+    	default:
+	    break;
+	};    
   };
 
 
@@ -276,7 +293,7 @@ dp.onBeforeEventRender = function(args) {
 dp.init();
 
 // Update calendar from servers database
-//loadExistingEvents();
+loadExistingEvents();
 
 
 
@@ -288,7 +305,8 @@ dp.init();
  * This function returns the stored events from server database.
  * @param {*} day 
  */
-async function loadExistingEvents(day) {
+ async function loadExistingEvents(day) {
+
     const start = nav.visibleStart() > new DayPilot.Date() ? nav.visibleStart() : new DayPilot.Date();
 
     const params = {
@@ -296,10 +314,48 @@ async function loadExistingEvents(day) {
       end: nav.visibleEnd().toString()
     };
 
-    
-    // Send request for events update and wait response
-    //const {data} = await DayPilot.Http.post("backend_events_free.php", params);
+    console.log(params);
 
+    var client = new HttpClient();
+    client.get("/update", params, function(args){
+
+        var response = JSON.parse(args);
+
+        console.log(response);
+
+	dp.events.list = response;
+	dp.update();
+/*        for (let i = 0; i < response.length; i++){
+	    console.log(i);
+	    if (response[i].id){
+		uid = response[i].id;
+	    }
+	    else{
+		console.log("No ID found");
+		uid = DayPilot.guid();
+	    }
+	    var ne = new DayPilot.Event({
+		start: response[i].start,
+		end: response[i].end,
+		id: uid,
+		text: " ",
+		tags: {
+			radio_type: response[i].radio_type,
+			status: response[i].status,
+		},
+	    });
+	    console.log(response[i]);
+	    console.log(ne);
+	    dp.events.add(ne);
+	    console.log("next");
+	}
+	//dp.update();
+*/
+
+  });
+
+
+/*
     if (day) {
       dp.startDate = day;
     }
@@ -308,14 +364,5 @@ async function loadExistingEvents(day) {
 
     nav.events.list = data;
     nav.update();
-  }
-
-
-/**
- * Function to send reservation request to the server
- * @param {*} event 
- */
-async function sendEventReservationRequest(event) {
-
-    // TODO
+*/
 }
