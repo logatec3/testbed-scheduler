@@ -128,7 +128,7 @@ def checkRequestedEvent(event):
 # ------------------------------------------------------------------------------------------
 # Flask config
 # ------------------------------------------------------------------------------------------
-app = Flask(__name__)
+app = Flask(__name__, static_url_path="", static_folder="static", template_folder="templates")
 
 @app.route("/")
 def index():
@@ -197,4 +197,4 @@ def event_request():
 
 
 if __name__ == "__main__":
-    app.run("0.0.0.0", debug=True)
+    app.run(host="localhost", port=8002)

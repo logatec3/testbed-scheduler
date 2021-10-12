@@ -7,14 +7,14 @@
         <script src="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
 		<link href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" rel="stylesheet">
 
-        <script type="text/javascript" src="/static/js/daypilot-all.min.js?v=2021.2.261"></script>
-        
+        <!-- LOCAL TEST
+        <script type="text/javascript" src="/static/js/daypilot-all.min.js?v=2021.2.261"></script> 
         <link href="/static/css/main.css?v=2021.2.261" type="text/css" rel="stylesheet"/>
+        -->
 
-        <script type="text/javascript" src="/static/js/script.js"></script>
-		<link href="/static/css/main.css" rel="stylesheet" type="text/css">
-        
-
+        <!-- DEPLOY -->
+        <script type="text/javascript" src="/scheduler/static/js/daypilot-all.min.js?v=2021.2.261"></script> 
+        <link href="/scheduler/static/css/main.css?v=2021.2.261" type="text/css" rel="stylesheet"/>
 
         <link rel="icon" href="data:,">
 	</head> 
@@ -43,16 +43,13 @@
                                 <div id="dp"></div>
                             </div>
                         </div>
-                    <!--
-                        <div class="col-4">
-                            <div id="nav"></div>
-                        </div>
-                        <div class="col-7">
-                            <div id="dp"></div>
-                        </div>
-                    -->
+
                         <!-- Script for calendar must be called after calendar ID init-->
+                        <!-- LOCAL TEST
                         <script type="text/javascript" src="/static/js/calendar.js"></script>
+                        -->
+                        <!-- DEPLOY -->
+                        <script type="text/javascript" src="/scheduler/static/js/calendar.js"></script>
 
                 </div>
             </div>
