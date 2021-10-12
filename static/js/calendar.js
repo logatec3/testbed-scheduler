@@ -20,7 +20,25 @@
 */
 
 
-
+/**
+ * Function that sends HTTP GET request
+ * @param url URL for request
+ * @param data dictionary with data to send
+ * @param callback a callback function to handle response
+ */
+ var HttpClient = function() {
+    this.get = function(url, data, callback) {
+        var httpRequest = new XMLHttpRequest();
+        httpRequest.onreadystatechange = function() { 
+            if (httpRequest.readyState == 4 && httpRequest.status == 200){
+                callback(httpRequest.responseText);
+            }
+        }
+        httpRequest.open("POST", url, true );            
+        httpRequest.setRequestHeader("Content-Type", "application/json");
+        httpRequest.send(JSON.stringify(data));
+    }
+}
 
 // -------------------------------------------------
 // Navigation setup
@@ -229,34 +247,6 @@ dp.init();
 // Update calendar from servers database
 loadExistingEvents();
 
-
-
-
-
-
-
-
-
-
-/**
- * Function that sends HTTP GET request
- * @param url URL for request
- * @param data dictionary with data to send
- * @param callback a callback function to handle response
- */
- var HttpClient = function() {
-    this.get = function(url, data, callback) {
-        var httpRequest = new XMLHttpRequest();
-        httpRequest.onreadystatechange = function() { 
-            if (httpRequest.readyState == 4 && httpRequest.status == 200){
-                callback(httpRequest.responseText);
-            }
-        }
-        httpRequest.open("POST", url, true );            
-        httpRequest.setRequestHeader("Content-Type", "application/json");
-        httpRequest.send(JSON.stringify(data));
-    }
-}
 
 
 /**
