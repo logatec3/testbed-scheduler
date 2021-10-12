@@ -2,27 +2,22 @@
  * DayPilot library. It is awesome but in lite version:
  * Tags are not working
  * Regex expression fails at modal - cannot use modal as input data :/
- */
-
-
-
-/**
- * Send HTTP GET request with callback function
- */
- var HttpClient = function() {
-    this.get = function(url, data, callback) {
-        var httpRequest = new XMLHttpRequest();
-        httpRequest.onreadystatechange = function() { 
-            if (httpRequest.readyState == 4 && httpRequest.status == 200){
-                callback(httpRequest.responseText);
-            }
-        }
-
-        httpRequest.open("POST", url, true );            
-        httpRequest.setRequestHeader("Content-Type", "application/json");
-        httpRequest.send(JSON.stringify(data));
-    }
-}
+ *
+ *
+ *
+ * // Dummy event
+    var ev = new DayPilot.Event({
+        start: new DayPilot.Date("2021-10-04T00:00:00"),
+        end: new DayPilot.Date("2021-10-07T20:00:00"),
+        id: DayPilot.guid(),
+        text: "SRDB",
+        tags: {
+            radio_type : "SRDB",
+            status : "confirmed"
+        },
+    });
+    dp.events.add(ev);
+*/
 
 
 
@@ -40,27 +35,9 @@ nav.onTimeRangeSelected = function(args) {
 nav.init();
 
 
-
-
-
 // -------------------------------------------------
 // Month calendar setup
 // -------------------------------------------------
-
-/* EXAMPLE OF AN EVENT
-{
-    "start": "2021-03-06T00:00:00",
-    "end": "2021-03-06T12:00:00",
-    "id": "cb122202-5263-f467-73b3-643e4683bbc7",
-    "text": "USERNAME",
-    "tags": {
-        "radio_type": "SRDA",
-        "status": "pending"/"confirmed",
-    }
-}
-*/
-
-
 var dp = new DayPilot.Month("dp");
 
 // Set the day to today
@@ -80,25 +57,6 @@ dp.eventSelectHandling = "Disabled";
 dp.showToolTip = "True";
 //dp.eventClickHandling = "Disabled";
 //dp.timeRangeSelectedHandling = "Disabled";
-
-
-// Dummy event
-var ev = new DayPilot.Event({
-    start: new DayPilot.Date("2021-10-04T00:00:00"),
-    end: new DayPilot.Date("2021-10-07T20:00:00"),
-    id: DayPilot.guid(),
-    text: "test1",
-    tags: {
-        radio_type : "SRDB",
-        status : "confirmed"
-    },
-});
-console.log("Tuki");
-console.log(ev);
-dp.events.add(ev);
-
-
-
 
 
 /**
@@ -135,21 +93,18 @@ dp.onTimeRangeSelected = async args => {
         {name: "Radio type", id: "radio_type", options: device_types},
     ];
 
-    // Prompt modal to the user and wait for completion
     const modal = await DayPilot.Modal.form(form, data, options);
 
     dp.clearSelection();
     if(modal.canceled){
         return;
     }
-
     //console.log(modal.result);
 
     var e = new DayPilot.Event({
         start: modal.result.start,
         end: modal.result.end,
         id: DayPilot.guid(),
-        // TODO: fill in the username by user login credentials
         text: modal.result.radio_type,
         tags: {
             radio_type: modal.result.radio_type,
@@ -158,24 +113,7 @@ dp.onTimeRangeSelected = async args => {
     });
 
     //console.log(e.data);
-    var client = new HttpClient();
-
-        //client.get("/request-event?user=admin", function(response){
-
-        client.get("/request-event", e.data, function(args){
-
-            var response = JSON.parse(args);
-            var message = response["response_message"];
-
-            if (message !== "success"){
-                var modal = new DayPilot.Modal.alert(message)
-            }
-            else{
-                dp.events.add(e);
-                //dp.events.add(response["response_event"]);
-                dp.update();
-            }
-    });
+    sendEventRequest(e);
 };
 
 
@@ -183,7 +121,6 @@ dp.onTimeRangeSelected = async args => {
  * Modal for event info
  */
 dp.onEventClick = function(args) {
-
 
     var s = args.e.start(),
         e = args.e.end(),
@@ -214,10 +151,7 @@ dp.onBeforeEventRender = args => {
 
     var type = args.data.tags && args.data.tags.radio_type;
     var status = args.data.tags && args.data.tags.status;
-	
-	console.log("\n\n -----------------------------------------------\n\n");
-	console.log(type);
-	console.log(status);
+
     switch (type) {
         case "SRDA":
             if(status === "confirmed"){
@@ -272,13 +206,13 @@ dp.onBeforeEventRender = args => {
         case "pending":
             args.data.fontColor = "#5e6a6e";
             args.data.borderColor = "#5e6a6e";
-            args.data.toolTip = "Type: " + args.data.tags.radio_type + " | Waiting for admin conformation."
+            args.data.toolTip =  args.data.tags.radio_type + " | Waiting for admin conformation."
             break;
 
         case "confirmed":
             args.data.fontColor = "black";
             args.data.borderColor = "black";
-            args.data.toolTip = "Type: " + args.data.tags.radio_type + " | Resource already reserved from: " + args.data.start + " to " + args.data.end + ".";
+            args.data.toolTip = args.data.tags.radio_type + " | Resource already reserved from: " + args.data.start + " to " + args.data.end + ".";
             break;
     	default:
 	    break;
@@ -301,11 +235,34 @@ loadExistingEvents();
 
 
 
+
+
+
 /**
- * This function returns the stored events from server database.
- * @param {*} day 
+ * Function that sends HTTP GET request
+ * @param url URL for request
+ * @param data dictionary with data to send
+ * @param callback a callback function to handle response
  */
- async function loadExistingEvents(day) {
+ var HttpClient = function() {
+    this.get = function(url, data, callback) {
+        var httpRequest = new XMLHttpRequest();
+        httpRequest.onreadystatechange = function() { 
+            if (httpRequest.readyState == 4 && httpRequest.status == 200){
+                callback(httpRequest.responseText);
+            }
+        }
+        httpRequest.open("POST", url, true );            
+        httpRequest.setRequestHeader("Content-Type", "application/json");
+        httpRequest.send(JSON.stringify(data));
+    }
+}
+
+
+/**
+ * Function returns the stored events from server database.
+ */
+ async function loadExistingEvents() {
 
     const start = nav.visibleStart() > new DayPilot.Date() ? nav.visibleStart() : new DayPilot.Date();
 
@@ -313,56 +270,36 @@ loadExistingEvents();
       start: start.toString(),
       end: nav.visibleEnd().toString()
     };
-
-    console.log(params);
+    //console.log(params);
 
     var client = new HttpClient();
     client.get("/update", params, function(args){
 
         var response = JSON.parse(args);
+        //console.log(response);
 
-        console.log(response);
+        dp.events.list = response;
+        dp.update();
+    });
+}
 
-	dp.events.list = response;
-	dp.update();
-/*        for (let i = 0; i < response.length; i++){
-	    console.log(i);
-	    if (response[i].id){
-		uid = response[i].id;
-	    }
-	    else{
-		console.log("No ID found");
-		uid = DayPilot.guid();
-	    }
-	    var ne = new DayPilot.Event({
-		start: response[i].start,
-		end: response[i].end,
-		id: uid,
-		text: " ",
-		tags: {
-			radio_type: response[i].radio_type,
-			status: response[i].status,
-		},
-	    });
-	    console.log(response[i]);
-	    console.log(ne);
-	    dp.events.add(ne);
-	    console.log("next");
-	}
-	//dp.update();
-*/
+async function sendEventRequest(event) {
 
-  });
+    var client = new HttpClient();
 
+    //client.get("/request-event?user=admin", function(response){
+    client.get("/request-event", event.data, function(args){
 
-/*
-    if (day) {
-      dp.startDate = day;
-    }
-    dp.events.list = data;
-    dp.update();
+        var response = JSON.parse(args);
+        var message = response["response_message"];
 
-    nav.events.list = data;
-    nav.update();
-*/
+        if (message !== "success"){
+            var modal = new DayPilot.Modal.alert(message)
+        }
+        else{
+            dp.events.add(event);
+            //dp.events.add(response["response_event"]);
+            dp.update();
+        }
+    });
 }

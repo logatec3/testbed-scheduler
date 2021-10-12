@@ -7,11 +7,8 @@
     # You can test the: request.authorization.username oz morbt request.headers.authorization
     # V bazi podatkov je ta token shranjen poleg uporabnika (users)
 
-# Na konci me zafrkava to shranjevanje eventov v bazo podatkov
-# ogotovu, da bom mogu mal spremenit:
-
 """
-V bazi podatkov nej bo:
+Database document example (only event is seen on the frontend)
 
 user_name:
 request_date:
@@ -22,9 +19,6 @@ event:
     tags:
         status
         radio_type
-
-
-In na spletni strani nej bo viden sam ta event
 """
 
 import logging
@@ -38,34 +32,20 @@ from flask.helpers import url_for
 
 
 # Logging config
-logging.basicConfig(format="%(asctime)s [%(levelname)7s]:[%(name)5s > %(funcName)17s() > %(lineno)3s] - %(message)s", level=logging.DEBUG)#, filename="server.log")
+logging.basicConfig(format="%(asctime)s [%(levelname)7s]:[%(name)5s > %(funcName)17s() > %(lineno)3s] - %(message)s", level=logging.INFO)#, filename="server.log")
 log = logging.getLogger("Server")
 
 
-
 # MongoDB config
-
-# Collection name: reserved_resources
-# 
-# Record example:
-# {
-# '_id': ...
-# 'user_name':users{}
-# 'start': '...',
-# 'stop' : '...',
-# 'radio_type': "SRDA"/"SRDB"/...
-# 'status' : "pending"/"confirmed"
-#### Not yet implemented
-# 'start_hour': '...',
-# 'stop_hour' : '...',
-# }
 HOSTNAME = "mongodb://localhost:27017/sms"
 
 db = MongoClient(HOSTNAME)["sms"]
 users = db["users"]
-resource_events = db["reserved_resources"]
+reserved_resources = db["reserved_resources"]
 
-# TODO - delete me ---> Dummy event to create collection
+
+# Dummy event to create collection
+"""
 admin = users.find_one({"username":"admin"}) #,{"username":1, "type":1, "_id":0})
 e_start = datetime(2021, 10, 6).isoformat()
 e_end   = datetime(2021, 10, 7).isoformat()
@@ -73,8 +53,8 @@ e_end   = datetime(2021, 10, 7).isoformat()
 dummy_event = {"start":e_start, "end":e_end, "tags":{"radio_type":"SRDA", "status":"confirmed"}}
 dummy_resource = {"user_name":admin, "request_date":e_start, "confirmed_by":"none", "event":dummy_event}
 
-#resource_events.insert_one(dummy_resource)
-
+resource_events.insert_one(dummy_resource)
+"""
 
 
 # Return a list of reserved events from database
@@ -88,10 +68,9 @@ def getReservedEvents():
     return event_list
 
 
-
-
 # Return a list of reserved resources by given type from the database
 def getReservedResources(radio_type):
+    log.debug("Get " + radio_type + " reserved resources")
     resources = db["reserved_resources"]
     resources_list = []
 
@@ -100,35 +79,31 @@ def getReservedResources(radio_type):
 
     return resources_list
 
-
 # Return True if new_event is not overlaping with others
 def isResourceFree(new_resource):
 
     # Get all events
-    print(new_resource)
-    event_type = new_resource.get("event", {}).get("tags", {}).get("radio_type")
-    #event_type = new_resource["event"]["tags"]["radio_type"]
-    resources = getReservedResources(event_type)
+    log.info("Is resource free")
+    log.debug(new_resource)
 
-    # Add new one
+    event_type = new_resource.get("event", {}).get("tags", {}).get("radio_type")
+    resources = getReservedResources(event_type)
     resources.append(new_resource)
-    #print(resources)
 
     # Sort them by start time
     sorted_resources = sorted(resources, key = lambda d: d["event"]["start"])
-    print("Sorted resurces ..... ")
-    print(sorted_resources)
+
     # Check for overlaping
     for i in range(1, len(sorted_resources)):
-        if sorted_resources[i - 1].get("event",{}).get("end",{}) >= sorted_resources[i].get("event",{}).get("start",{}):
+        if sorted_resources[i - 1].get("event",{}).get("end",{}) > sorted_resources[i].get("event",{}).get("start",{}):
             return False
 
     return True
 
-
+# Check if event is in considarable limits
+# Messages that are returned will be visible on the frontend modal.
 def checkRequestedEvent(event):
-    
-    #1 Check if in the past
+    #1 Check if event is in the past
     if event["start"] < datetime.now().isoformat():
         return "Can't reserve resources in the past"
     
@@ -144,13 +119,15 @@ def checkRequestedEvent(event):
     week = week.isoformat()
     if (event["end"] > week):
         return "Reservation possible for max 7 days"
+
     return "success"
 
 
 
 
-
+# ------------------------------------------------------------------------------------------
 # Flask config
+# ------------------------------------------------------------------------------------------
 app = Flask(__name__)
 
 @app.route("/")
@@ -173,6 +150,19 @@ def send_img(path):
     return send_from_directory("static/img/", path)
 
 
+# Update reserved resources from the database
+@app.route("/update", methods=["POST"])
+def update_calendar():
+    log.info("Update events from database")
+
+    req = request.get_json()
+    # TODO: you can use req for deleting old events (req = {today:"..."})
+
+    events = getReservedEvents()
+
+    return jsonify(events)
+
+
 # Handle request for new resource reservation
 @app.route("/request-event", methods=["POST"])
 def event_request():
@@ -187,36 +177,23 @@ def event_request():
     # If event timings are within desired parameters
     resp = checkRequestedEvent(event)
 
-    # If resources are free
-    if(resp == "success"):  
+    if(resp == "success"):
+        user = "NekUser"
         now = datetime.now().isoformat()
-        resource = {"user_name":"nekUser", "request_date":now, "confirmed_by": "none", "event": event}
+        resource = {"user_name":user, "request_date":now, "confirmed_by": "none", "event": event}
         
         if (isResourceFree(resource)):
-
-            print("----Tip resource variable")
-            print(type(resource))
-
+            # Store new request into database
             db["reserved_resources"].insert_one(resource)
-            for i in resource_events.find():
-                print(i)
         else:
-            resp = "The resources are already reserved for that event"
-    print("response is " + resp)
+            resp = "The resources are already reserved for chosen period!"
+
+    log.info("Request got response: " + resp)
     
     return jsonify(
         response_message = resp,
         #response_event = event,
     )
-
-@app.route("/update", methods=["POST"])
-def update_calendar():
-    r = request.get_json()
-    print(r)
-
-    events = getReservedEvents()
-
-    return jsonify(events)
 
 
 if __name__ == "__main__":
