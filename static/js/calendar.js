@@ -34,7 +34,9 @@
                 callback(httpRequest.responseText);
             }
         }
-        httpRequest.open("POST", url, true );            
+        u = "/scheduler" + url;
+        // u = url; --> LOCAL TEST!
+        httpRequest.open("POST", u, true );            
         httpRequest.setRequestHeader("Content-Type", "application/json");
         httpRequest.send(JSON.stringify(data));
     }
