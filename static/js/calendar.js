@@ -17,7 +17,11 @@
         },
     });
     dp.events.add(ev);
-*/
+
+ *
+ * TODO: Can't find a username on the frontend... workaround:
+ * Prompt a user for his GitHub username :)
+ */
 
 
 /**
@@ -111,6 +115,7 @@ dp.onTimeRangeSelected = async args => {
         //{name: "From", id: "start", dateFormat:"MM d, yyyy"},
         //{name: "To", id: "end", dateFormat:"MM d, yyyy"},
         {name: "Radio type", id: "radio_type", options: device_types},
+        {name: "GitHub user name", id: "username"},
     ];
 
     const modal = await DayPilot.Modal.form(form, data, options);
@@ -133,7 +138,7 @@ dp.onTimeRangeSelected = async args => {
     });
 
     //console.log(e.data);
-    sendEventRequest(e);
+    sendEventRequest(e, modal.result.username);
 };
 
 
@@ -216,13 +221,13 @@ dp.onBeforeEventRender = args => {
         case "pending":
             args.data.fontColor = "#5e6a6e";
             args.data.borderColor = "#5e6a6e";
-            args.data.toolTip =  args.data.tags.radio_type + " | Waiting for admin conformation."
+            args.data.toolTip =  "Waiting for admin conformation."
             break;
 
         case "confirmed":
             args.data.fontColor = "black";
             args.data.borderColor = "black";
-            args.data.toolTip = args.data.tags.radio_type + " | Resource already reserved from: " + args.data.start + " to " + args.data.end + ".";
+            args.data.toolTip = "Resources reserved from: " + args.data.start + " to " + args.data.end + ".";
             break;
     	default:
 	    break;
@@ -267,12 +272,15 @@ loadExistingEvents();
     });
 }
 
-async function sendEventRequest(event) {
+async function sendEventRequest(event, username) {
+
+    // Workaround: Add a username to the request
+    var request = event.data;
+    request["gh_user"] = username;
 
     var client = new HttpClient();
-
     //client.get("/request-event?user=admin", function(response){
-    client.get("/request-event", event.data, function(args){
+    client.get("/request-event", request, function(args){
 
         var response = JSON.parse(args);
         var message = response["response_message"];

@@ -10,7 +10,7 @@
 """
 Database document example (only event is seen on the frontend)
 
-user_name:
+username:
 request_date:
 confirmed_by:
 event:
@@ -168,19 +168,24 @@ def update_calendar():
 def event_request():
     event = request.get_json()
 
-    # Testing
+    # Obtain user credentials
     #user_token = request.authorization.username
+    # request.headers.authorization
     # print(user_token)
-    print("Cookies: ")
-    print(request.cookies.get("connect.sid"))
+    #print("Cookies: ")
+    #print(request.cookies.get("connect.sid"))
+
+    # Workaround: Extract username from request
+    user = event.pop("gh_user")
+
 
     # If event timings are within desired parameters
     resp = checkRequestedEvent(event)
 
     if(resp == "success"):
-        user = "NekUser"
+
         now = datetime.now().isoformat()
-        resource = {"user_name":user, "request_date":now, "confirmed_by": "none", "event": event}
+        resource = {"username":user, "request_date":now, "confirmed_by": "none", "event": event}
         
         if (isResourceFree(resource)):
             # Store new request into database
