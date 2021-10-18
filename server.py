@@ -30,6 +30,7 @@ from pymongo import MongoClient
 from flask import Flask, render_template, send_from_directory, jsonify, request
 from flask.helpers import url_for
 
+from mail import mail
 
 # Logging config
 logging.basicConfig(format="%(asctime)s [%(levelname)7s]:[%(name)5s > %(funcName)17s() > %(lineno)3s] - %(message)s", level=logging.INFO)#, filename="server.log")
@@ -178,6 +179,9 @@ def event_request():
     # Workaround: Extract username from request
     user = event.pop("gh_user")
 
+    # TODO: Check if the user is in the database and get his mail
+    user_mail = "example@test.com"
+
 
     # If event timings are within desired parameters
     resp = checkRequestedEvent(event)
@@ -190,6 +194,7 @@ def event_request():
         if (isResourceFree(resource)):
             # Store new request into database
             db["reserved_resources"].insert_one(resource)
+            mail.sendReservationSuccess(user, user_mail, event)
         else:
             resp = "The resources are already reserved for chosen period!"
 
