@@ -33,7 +33,7 @@ from flask.helpers import url_for
 from mail import mail
 
 # Logging config
-logging.basicConfig(format="%(asctime)s [%(levelname)7s]:[%(name)5s > %(funcName)17s() > %(lineno)3s] - %(message)s", level=logging.INFO)#, filename="server.log")
+logging.basicConfig(format="%(asctime)s [%(levelname)7s]:[%(name)5s > %(funcName)17s() > %(lineno)3s] - %(message)s", level=logging.INFO, filename="scheduler.log")
 log = logging.getLogger("Server")
 
 
