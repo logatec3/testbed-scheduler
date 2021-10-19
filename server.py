@@ -133,8 +133,6 @@ app = Flask(__name__, static_url_path="", static_folder="static", template_folde
 
 @app.route("/")
 def index():
-    log.info("testos")
-    log.info(request.args.get("u"))
     templateData={"test":"case"}
     return render_template("index.html", **templateData)
 
