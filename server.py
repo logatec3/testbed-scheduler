@@ -175,6 +175,8 @@ def event_request():
     # print(user_token)
     #print("Cookies: ")
     #print(request.cookies.get("connect.sid"))
+    log.info("testing session.user")
+    log.info(request.session.user)
 
     # Workaround: Extract username from request
     user = event.pop("gh_user")
@@ -207,4 +209,4 @@ def event_request():
 
 
 if __name__ == "__main__":
-    app.run(host="localhost", port=8002)
+    app.run(host="localhost", port=8002, debug=True)

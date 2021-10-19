@@ -243,6 +243,28 @@ dp.init();
 // Update calendar from servers database
 loadExistingEvents();
 
+console.log("testing session.user");
+console.log(session.user);
+
+// --------------------------------------------------------------------------------------------------
+// ToDo:
+// --------------------------------------------------------------------------------------------------
+/*
+POST na "/handler" contentType: "application/json; charset=utf-8",
+data: 
+"action:"get_current_user", data: {}"
+
+
+response:
+
+username:"admin"
+full_name: "Admin Admin"
+type: "admin"
+token: "sadasdasdsadasd"
+*/
+
+
+
 
 
 // --------------------------------------------------------------------------------------------------
