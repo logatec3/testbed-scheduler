@@ -133,6 +133,8 @@ app = Flask(__name__, static_url_path="", static_folder="static", template_folde
 
 @app.route("/")
 def index():
+    log.info("testos")
+    log.info(request.args.get("u"))
     templateData={"test":"case"}
     return render_template("index.html", **templateData)
 
@@ -175,8 +177,6 @@ def event_request():
     # print(user_token)
     #print("Cookies: ")
     #print(request.cookies.get("connect.sid"))
-    log.info("testing session.user")
-    log.info(request.session.user)
 
     # Workaround: Extract username from request
     user = event.pop("gh_user")

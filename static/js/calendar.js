@@ -243,8 +243,6 @@ dp.init();
 // Update calendar from servers database
 loadExistingEvents();
 
-console.log("testing session.user");
-console.log(session.user);
 
 // --------------------------------------------------------------------------------------------------
 // ToDo:
