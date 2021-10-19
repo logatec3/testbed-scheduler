@@ -19,7 +19,8 @@
         <link rel="icon" href="data:,">
         <script>
             $(document).ready(function () {
-                ko.applyBindings(Carvic.Model.StdData);
+                var uname = $("#id_user").text();
+                console.log(uname);
             });
         </script>
 	</head> 
@@ -37,7 +38,7 @@
 
             <div class="well">
                 <div class="row justify-content-center">
-                        <h3 style="text-align: center;">Calendar</h3><span data-bind="text: $root.StdData.CurrentUsername"></span>
+                        <h3 style="text-align: center;">Calendar</h3
                         <br>
 
                         <div style="display: flex;">
