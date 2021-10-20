@@ -133,9 +133,13 @@ app = Flask(__name__, static_url_path="", static_folder="static", template_folde
 
 @app.route("/")
 def index():
-    uname = request.args.get("u")
-    log.info(uname)
-    templateData={"test":"case"}
+    u = request.args.get("u")
+    option = ""
+    user = db["users"].find_one({"username":u})
+    if(user):
+        if(user["type"] == "admin"):
+            option="a"
+    templateData={"username":u, "option":option}
     return render_template("index.html", **templateData)
 
 

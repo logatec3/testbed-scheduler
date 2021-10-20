@@ -17,12 +17,6 @@
         <link href="/scheduler/static/css/main.css?v=2021.2.261" type="text/css" rel="stylesheet"/>
 
         <link rel="icon" href="data:,">
-        <script>
-            $(document).ready(function () {
-                var uname = $("#id_user", parent.document).text();
-                console.log(uname);
-            });
-        </script>
 	</head> 
 
 	<body>
@@ -31,7 +25,7 @@
             <div class="well">
                 <div class="row">
                     <h2><i class="glyphicon glyphicon-calendar"></i> Testbed resource reservation </h2>
-                    <p>Scheduler with calendar for testbed resource reservation.</p> 
+                    <p>Hi <span id="username">{{username}}</span>! To make a reservation request, please chose a period in calendar and follow the instructions.</p> 
                     <!--input type="button" class="btn btn-default" data-toggle="modal" data-target="#help_modal" value="How to use?" /-->
                 </div>
 			</div>
@@ -52,10 +46,10 @@
 
                         <!-- Script for calendar must be called after calendar ID init-->
                         <!-- LOCAL TEST
-                        <script type="text/javascript" src="/static/js/calendar.js"></script>
+                        <script type="text/javascript" src="/static/js/{{option}}calendar.js"></script>
                         -->
                         <!-- DEPLOY -->
-                        <script type="text/javascript" src="/scheduler/static/js/calendar.js"></script>
+                        <script type="text/javascript" src="/scheduler/static/js/{{option}}calendar.js"></script>
 
                 </div>
             </div>
