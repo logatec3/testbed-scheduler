@@ -27,10 +27,10 @@ import dateutil.parser
 
 from pymongo import MongoClient
 
-from flask import Flask, render_template, send_from_directory, jsonify, request, make_response
+from flask import Flask, render_template, send_from_directory, jsonify, request
 from flask.helpers import url_for
 
-from email import email
+from tb_mail import email
 
 mail = email()
 
