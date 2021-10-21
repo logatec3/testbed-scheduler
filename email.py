@@ -5,7 +5,7 @@ import smtplib
 
 
 
-class mail:
+class email:
     _testbed_email = "example@gmail.com"
     _testbed_pwd = "password"
 

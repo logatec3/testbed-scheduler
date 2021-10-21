@@ -27,10 +27,12 @@ import dateutil.parser
 
 from pymongo import MongoClient
 
-from flask import Flask, render_template, send_from_directory, jsonify, request
+from flask import Flask, render_template, send_from_directory, jsonify, request, make_response
 from flask.helpers import url_for
 
-from mail import mail
+from email import email
+
+mail = email()
 
 # Logging config
 logging.basicConfig(format="%(asctime)s [%(levelname)7s]:[%(name)5s > %(funcName)17s() > %(lineno)3s] - %(message)s", level=logging.INFO, filename="scheduler.log")
@@ -133,13 +135,17 @@ app = Flask(__name__, static_url_path="", static_folder="static", template_folde
 
 @app.route("/")
 def index():
+    # Finta u levu: ime shrani v span z id-jom username in za admina vrni drugi JS fajl
     u = request.args.get("u")
-    option = ""
+    option = "user"
     user = db["users"].find_one({"username":u})
     if(user):
         if(user["type"] == "admin"):
-            option="a"
-    templateData={"username":u, "option":option}
+            option = "admin"
+    else:
+        return "Access denied - no user in the database"
+    
+    templateData = {"username":u, "option":option}
     return render_template("index.html", **templateData)
 
 
@@ -163,7 +169,7 @@ def update_calendar():
     log.info("Update events from database")
 
     req = request.get_json()
-    # TODO: you can use req for deleting old events (req = {today:"..."})
+    # TODO: you can use req to cleanup old events (req = {today:"..."})
 
     events = getReservedEvents()
 
@@ -183,7 +189,7 @@ def event_request():
     #print(request.cookies.get("connect.sid"))
 
     # Workaround: Extract username from request
-    user = event.pop("gh_user")
+    user = event.pop("user")
 
     # TODO: Check if the user is in the database and get his mail
     user_mail = "example@test.com"
@@ -200,7 +206,7 @@ def event_request():
         if (isResourceFree(resource)):
             # Store new request into database
             db["reserved_resources"].insert_one(resource)
-            mail.sendReservationSuccess(user, user_mail, event)
+            #mail.sendReservationSuccess(user, user_mail, event)
         else:
             resp = "The resources are already reserved for chosen period!"
 

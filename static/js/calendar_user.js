@@ -115,7 +115,6 @@ dp.onTimeRangeSelected = async args => {
         //{name: "From", id: "start", dateFormat:"MM d, yyyy"},
         //{name: "To", id: "end", dateFormat:"MM d, yyyy"},
         {name: "Radio type", id: "radio_type", options: device_types},
-        {name: "GitHub user name", id: "username"},
     ];
 
     const modal = await DayPilot.Modal.form(form, data, options);
@@ -138,7 +137,7 @@ dp.onTimeRangeSelected = async args => {
     });
 
     //console.log(e.data);
-    sendEventRequest(e, modal.result.username);
+    sendEventRequest(e);
 };
 
 
@@ -244,10 +243,6 @@ dp.init();
 loadExistingEvents();
 
 
-// --------------------------------------------------------------------------------------------------
-// ToDo:
-// --------------------------------------------------------------------------------------------------
-
 
 // --------------------------------------------------------------------------------------------------
 // Additional functions 
@@ -278,9 +273,9 @@ loadExistingEvents();
 
 async function sendEventRequest(event, username) {
 
-    // Workaround: Add a username to the request
+
     var request = event.data;
-    request["gh_user"] = username;
+    request["user"] = $("#username").text();
 
     var client = new HttpClient();
     //client.get("/request-event?user=admin", function(response){
