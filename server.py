@@ -188,11 +188,13 @@ def event_request():
     #print("Cookies: ")
     #print(request.cookies.get("connect.sid"))
 
-    # Workaround: Extract username from request
-    user = event.pop("user")
+    username = event.pop("user")
 
-    # TODO: Check if the user is in the database and get his mail
-    user_mail = "example@test.com"
+    user = db["users"].find_one({"username":username})
+    if(user):
+        usermail = user["mail"]
+    else:
+        return "no user"
 
 
     # If event timings are within desired parameters
@@ -206,7 +208,7 @@ def event_request():
         if (isResourceFree(resource)):
             # Store new request into database
             db["reserved_resources"].insert_one(resource)
-            #mail.sendReservationSuccess(user, user_mail, event)
+            #mail.sendReservationSuccess(user, usermail, event)
         else:
             resp = "The resources are already reserved for chosen period!"
 

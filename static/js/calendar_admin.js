@@ -244,30 +244,21 @@ dp.init();
 loadExistingEvents();
 
 
+var current_user = "";
 
-
-var myhttp = function() {
-    this.get = function(url, data, callback) {
-        var httpRequest = new XMLHttpRequest();
-        httpRequest.onreadystatechange = function() { 
-            if (httpRequest.readyState == 4 && httpRequest.status == 200){
-                callback(httpRequest.responseText);
-            }
-        }
-        u = "" + url;
-        // u = url; --> LOCAL TEST!
-        httpRequest.open("POST", u, true );            
-        httpRequest.setRequestHeader("Content-Type", "application/json");
-        httpRequest.send(JSON.stringify(data));
+var xhttp = new XMLHttpRequest();
+xhttp.onreadystatechange = function() {
+    if(this.readyState == 4 && this.status == 200){
+        var resp = JSON.parse(this.response);
+        current_user = resp["username"];
+        console.log(current_user);
     }
 }
+xhttp.open("POST", "/handler", true);
+xhhtp.setRequestHeader("Content-Type", "application/json");
+xhhtp.send(JSON.stringify({action:"get_current_user", data:{}}));
 
-var m = new myhttp();
-const p = { action:"get_current_user", data:{}};
-m.get("/handler", p, function(args){
-    var r = JSON.parse(args);
-    console.log(r);
-}); 
+
 // --------------------------------------------------------------------------------------------------
 // ToDo:
 // --------------------------------------------------------------------------------------------------
@@ -304,7 +295,7 @@ async function sendEventRequest(event, username) {
 
     // Workaround: Add a username to the request
     var request = event.data;
-    request["gh_user"] = username;
+    request["user"] = current_user;
 
     var client = new HttpClient();
     //client.get("/request-event?user=admin", function(response){
