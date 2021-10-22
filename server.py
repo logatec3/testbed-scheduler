@@ -193,7 +193,7 @@ def event_request():
     if(resp == "success"):
 
         now = datetime.now().isoformat()
-        resource = {"username":user, "request_date":now, "confirmed_by": "none", "event": event}
+        resource = {"username":username, "request_date":now, "confirmed_by": "none", "event": event}
         
         # Check if the resources are free
         if (isResourceFree(resource)):

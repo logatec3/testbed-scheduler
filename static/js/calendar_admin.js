@@ -145,7 +145,7 @@ dp.onTimeRangeSelected = async args => {
  * Modal for event info
  */
  dp.onEventClick = async args => {
-
+/*
     var ev = args.e.data;
     if(ev.tags.status === "pending"){
         var message = "Waiting for admin conformation.";
@@ -155,6 +155,45 @@ dp.onTimeRangeSelected = async args => {
     }
     //message += "For more info contact the administrator.";
     var modal = new DayPilot.Modal.alert(message);
+*/
+    var ev = args.e.data;
+
+    if(ev.tags.status == "pending"){
+        var opt = [
+            {name: "Confirm request?", id: "confirm"},
+            {name: "Delete request?", id: "delete"}
+        ];
+        const form = [
+            {name: "Would you like to:"},
+            {name: "", id: "action", options: opt}
+        ];
+
+        var modal = await DayPilot.Modal.form(form, {}, {focus: "action"});
+        if(modal.canceled){
+            return;
+        }
+        console.log("Admin selected ");
+        console.log(modal.result.action);
+    
+    }
+    else{
+        message = "Would you like to delete reserved resource?"; 
+        var modal = await DeyPilot.Modal.confirm(message, {okText:"Yes", cancelText:"No"});
+        if(modal.result){
+            console.log("Admin deleted resource");
+            // TODO Send delete request
+        }
+        return;        
+    }
+
+
+    const form = [
+        {name: "Configure resource"},
+        {name: "", id: "action", options: opt}
+    ];
+
+    
+ 
 };
 
 
@@ -250,13 +289,11 @@ xhttp.onreadystatechange = function() {
     if(this.readyState == 4 && this.status == 200){
         var resp = JSON.parse(this.response);
         current_user = resp["username"];
-        console.log("Curent user is: ");
-        console.log(current_user);
     }
 }
 xhttp.open("POST", "/handler", true);
-xhhtp.setRequestHeader("Content-Type", "application/json");
-xhhtp.send(JSON.stringify({action:"get_current_user", data:{}}));
+xhttp.setRequestHeader("Content-Type", "application/json");
+xhttp.send(JSON.stringify({action:"get_current_user", data:{}}));
 
 
 // --------------------------------------------------------------------------------------------------
