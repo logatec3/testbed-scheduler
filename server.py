@@ -41,14 +41,12 @@ log = logging.getLogger("Server")
 
 # MongoDB config
 HOSTNAME = "mongodb://localhost:27017/sms"
-
 db = MongoClient(HOSTNAME)["sms"]
-users = db["users"]
-reserved_resources = db["reserved_resources"]
-
 
 # Dummy event to create collection
 """
+users = db["users"]
+reserved_resources = db["reserved_resources"]
 admin = users.find_one({"username":"admin"}) #,{"username":1, "type":1, "_id":0})
 e_start = datetime(2021, 10, 6).isoformat()
 e_end   = datetime(2021, 10, 7).isoformat()
@@ -143,7 +141,7 @@ def index():
         if(user["type"] == "admin"):
             option = "admin"
     else:
-        return "Access denied - no user in the database"
+        return "<h1>Unauthorized access</h1>"
     
     templateData = {"username":u, "option":option}
     return render_template("index.html", **templateData)
@@ -177,36 +175,29 @@ def update_calendar():
 
 
 # Handle request for new resource reservation
-@app.route("/request-event", methods=["POST"])
+@app.route("/event-request", methods=["POST"])
 def event_request():
     event = request.get_json()
-
-    # Obtain user credentials
-    #user_token = request.authorization.username
-    # request.headers.authorization
-    # print(user_token)
-    #print("Cookies: ")
-    #print(request.cookies.get("connect.sid"))
-
     username = event.pop("user")
 
+    # Check if user is in the database
     user = db["users"].find_one({"username":username})
     if(user):
         usermail = user["mail"]
     else:
-        return "no user"
+        return jsonify(msg = "User is not authorized")
 
 
-    # If event timings are within desired parameters
+    # Check if event is within the desired parameters
     resp = checkRequestedEvent(event)
-
     if(resp == "success"):
 
         now = datetime.now().isoformat()
         resource = {"username":user, "request_date":now, "confirmed_by": "none", "event": event}
         
+        # Check if the resources are free
         if (isResourceFree(resource)):
-            # Store new request into database
+            # Store new request into database and send email to the user
             db["reserved_resources"].insert_one(resource)
             #mail.sendReservationSuccess(user, usermail, event)
         else:
@@ -214,10 +205,7 @@ def event_request():
 
     log.info("Request got response: " + resp)
     
-    return jsonify(
-        response_message = resp,
-        #response_event = event,
-    )
+    return jsonify(msg = resp)
 
 
 if __name__ == "__main__":

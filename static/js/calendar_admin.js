@@ -115,7 +115,6 @@ dp.onTimeRangeSelected = async args => {
         //{name: "From", id: "start", dateFormat:"MM d, yyyy"},
         //{name: "To", id: "end", dateFormat:"MM d, yyyy"},
         {name: "Radio type", id: "radio_type", options: device_types},
-        {name: "GitHub user name", id: "username"},
     ];
 
     const modal = await DayPilot.Modal.form(form, data, options);
@@ -138,7 +137,7 @@ dp.onTimeRangeSelected = async args => {
     });
 
     //console.log(e.data);
-    sendEventRequest(e, modal.result.username);
+    sendEventRequest(e);
 };
 
 
@@ -251,17 +250,13 @@ xhttp.onreadystatechange = function() {
     if(this.readyState == 4 && this.status == 200){
         var resp = JSON.parse(this.response);
         current_user = resp["username"];
+        console.log("Curent user is: ");
         console.log(current_user);
     }
 }
 xhttp.open("POST", "/handler", true);
 xhhtp.setRequestHeader("Content-Type", "application/json");
 xhhtp.send(JSON.stringify({action:"get_current_user", data:{}}));
-
-
-// --------------------------------------------------------------------------------------------------
-// ToDo:
-// --------------------------------------------------------------------------------------------------
 
 
 // --------------------------------------------------------------------------------------------------
@@ -291,18 +286,17 @@ xhhtp.send(JSON.stringify({action:"get_current_user", data:{}}));
     });
 }
 
-async function sendEventRequest(event, username) {
+async function sendEventRequest(event) {
 
     // Workaround: Add a username to the request
     var request = event.data;
     request["user"] = current_user;
 
     var client = new HttpClient();
-    //client.get("/request-event?user=admin", function(response){
-    client.get("/request-event", request, function(args){
+    client.get("/event-request", request, function(args){
 
         var response = JSON.parse(args);
-        var message = response["response_message"];
+        var message = response["msg"];
 
         if (message !== "success"){
             var modal = new DayPilot.Modal.alert(message)
