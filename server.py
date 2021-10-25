@@ -41,14 +41,12 @@ log = logging.getLogger("Server")
 
 # MongoDB config
 HOSTNAME = "mongodb://localhost:27017/sms"
-
 db = MongoClient(HOSTNAME)["sms"]
-users = db["users"]
-reserved_resources = db["reserved_resources"]
-
 
 # Dummy event to create collection
 """
+users = db["users"]
+reserved_resources = db["reserved_resources"]
 admin = users.find_one({"username":"admin"}) #,{"username":1, "type":1, "_id":0})
 e_start = datetime(2021, 10, 6).isoformat()
 e_end   = datetime(2021, 10, 7).isoformat()
@@ -126,7 +124,32 @@ def checkRequestedEvent(event):
     return "success"
 
 
+def confirmResource(event, confirmed_by):
+    resources = db["reserved_resources"]
+    query = {"event.id" : event["id"]}
+    conf = {"$set": {"event.tags.status" : "confirmed"}}
+    conf_by = {"$set": {"confirmed_by" : confirmed_by}}
+    #conf_date = {}
 
+    resources.update_one(query, conf)
+    resources.update_one(query, conf_by)
+    return "success"
+
+def deleteResource(event):
+    resources = db["reserved_resources"]
+    query = {"event.id" : event["id"]}
+    r = resources.delete_one(query)
+
+    #if (r.deleted_count != 1):
+    #    return "Internal server error"
+
+    return "success"
+
+
+def printEvents():
+    all = getReservedEvents()
+    for e in all:
+        log.info(e)
 
 # ------------------------------------------------------------------------------------------
 # Flask config
@@ -143,7 +166,7 @@ def index():
         if(user["type"] == "admin"):
             option = "admin"
     else:
-        return "Access denied - no user in the database"
+        return "<h1>Unauthorized access</h1>"
     
     templateData = {"username":u, "option":option}
     return render_template("index.html", **templateData)
@@ -177,47 +200,63 @@ def update_calendar():
 
 
 # Handle request for new resource reservation
-@app.route("/request-event", methods=["POST"])
+@app.route("/event-request", methods = ["POST"])
 def event_request():
     event = request.get_json()
-
-    # Obtain user credentials
-    #user_token = request.authorization.username
-    # request.headers.authorization
-    # print(user_token)
-    #print("Cookies: ")
-    #print(request.cookies.get("connect.sid"))
-
     username = event.pop("user")
 
+    # Check if user is in the database
     user = db["users"].find_one({"username":username})
     if(user):
         usermail = user["mail"]
     else:
-        return "no user"
+        return jsonify(msg = "Username does not exist")
 
 
-    # If event timings are within desired parameters
+    # Check if event is within the desired parameters
     resp = checkRequestedEvent(event)
-
     if(resp == "success"):
 
         now = datetime.now().isoformat()
-        resource = {"username":user, "request_date":now, "confirmed_by": "none", "event": event}
+        resource = {"username":username, "request_date":now, "confirmed_by": "none", "event": event}
         
+        # Check if the resources are free
         if (isResourceFree(resource)):
-            # Store new request into database
+            # Store new request into database and send email to the user
             db["reserved_resources"].insert_one(resource)
-            #mail.sendReservationSuccess(user, usermail, event)
+            mail.sendReservationSuccess(username, usermail, event)
         else:
             resp = "The resources are already reserved for chosen period!"
 
     log.info("Request got response: " + resp)
     
-    return jsonify(
-        response_message = resp,
-        #response_event = event,
-    )
+    return jsonify(msg = resp)
+
+
+@app.route("/event-modify", methods = ["POST"])
+def event_confirm():
+    event = request.get_json()
+    username = event.pop("user")
+    action = event.pop("action")
+
+    # Check if user has admin rights
+    user = db["users"].find_one({"username":username})
+    if(user):
+        if(user["type"] != "admin"):
+            return jsonify(msg = "User is not authorized")
+        
+    resource = db["reserved_resources"].find_one({"event.id":event["id"]})
+    r_username = resource["username"]
+    r_usermail = user["mail"]
+
+    if (action == "delete"):
+        resp = deleteResource(event)
+    elif (action == "confirm"):
+        resp = confirmResource(event, username)
+        mail.sendReservationConfirmed(r_username, r_usermail, event)
+
+    return jsonify(msg = resp)
+
 
 
 if __name__ == "__main__":

@@ -115,7 +115,6 @@ dp.onTimeRangeSelected = async args => {
         //{name: "From", id: "start", dateFormat:"MM d, yyyy"},
         //{name: "To", id: "end", dateFormat:"MM d, yyyy"},
         {name: "Radio type", id: "radio_type", options: device_types},
-        {name: "GitHub user name", id: "username"},
     ];
 
     const modal = await DayPilot.Modal.form(form, data, options);
@@ -138,7 +137,7 @@ dp.onTimeRangeSelected = async args => {
     });
 
     //console.log(e.data);
-    sendEventRequest(e, modal.result.username);
+    sendEventRequest(e);
 };
 
 
@@ -146,7 +145,7 @@ dp.onTimeRangeSelected = async args => {
  * Modal for event info
  */
  dp.onEventClick = async args => {
-
+/*
     var ev = args.e.data;
     if(ev.tags.status === "pending"){
         var message = "Waiting for admin conformation.";
@@ -156,6 +155,43 @@ dp.onTimeRangeSelected = async args => {
     }
     //message += "For more info contact the administrator.";
     var modal = new DayPilot.Modal.alert(message);
+*/
+    var ev = args.e;
+
+    if(ev.data.tags.status == "pending"){
+        var opt = [
+            {name: "Confirm request?", id: "confirm"},
+            {name: "Delete request?", id: "delete"}
+        ];
+        const form = [
+            {name: "Would you like to:"},
+            {name: "", id: "action", options: opt}
+        ];
+
+        var modal = await DayPilot.Modal.form(form, {}, {focus: "action"});
+        if(modal.canceled){
+            return;
+        }
+
+        if(modal.result.action === "confirm"){
+            console.log("Confirm selected resource")
+            sendEventModify("confirm", ev);
+        }
+        else if(modal.result.action === "delete"){
+            console.log("Delete selected resource")
+            sendEventModify("delete", ev);
+        }
+    }
+    else{
+        message = "Would you like to delete reserved resource?"; 
+        var modal = await DayPilot.Modal.confirm(message, {okText:"Yes", cancelText:"No"});
+        if(modal.canceled){
+            return;
+        }
+        console.log("Delete selected resource");
+        sendEventModify("delete", ev);   
+    }
+    return;
 };
 
 
@@ -221,7 +257,7 @@ dp.onBeforeEventRender = args => {
         case "pending":
             args.data.fontColor = "#5e6a6e";
             args.data.borderColor = "#5e6a6e";
-            args.data.toolTip =  "Waiting for admin conformation."
+            args.data.toolTip =  "Waiting for your conformation."
             break;
 
         case "confirmed":
@@ -251,17 +287,11 @@ xhttp.onreadystatechange = function() {
     if(this.readyState == 4 && this.status == 200){
         var resp = JSON.parse(this.response);
         current_user = resp["username"];
-        console.log(current_user);
     }
 }
 xhttp.open("POST", "/handler", true);
-xhhtp.setRequestHeader("Content-Type", "application/json");
-xhhtp.send(JSON.stringify({action:"get_current_user", data:{}}));
-
-
-// --------------------------------------------------------------------------------------------------
-// ToDo:
-// --------------------------------------------------------------------------------------------------
+xhttp.setRequestHeader("Content-Type", "application/json");
+xhttp.send(JSON.stringify({action:"get_current_user", data:{}}));
 
 
 // --------------------------------------------------------------------------------------------------
@@ -291,26 +321,47 @@ xhhtp.send(JSON.stringify({action:"get_current_user", data:{}}));
     });
 }
 
-async function sendEventRequest(event, username) {
+async function sendEventRequest(event) {
 
     // Workaround: Add a username to the request
     var request = event.data;
     request["user"] = current_user;
 
     var client = new HttpClient();
-    //client.get("/request-event?user=admin", function(response){
-    client.get("/request-event", request, function(args){
+    client.get("/event-request", request, function(args){
 
         var response = JSON.parse(args);
-        var message = response["response_message"];
+        var message = response["msg"];
 
         if (message !== "success"){
-            var modal = new DayPilot.Modal.alert(message)
+            var modal = new DayPilot.Modal.alert(message);
         }
         else{
             dp.events.add(event);
             //dp.events.add(response["response_event"]);
             dp.update();
+        }
+    });
+}
+
+async function sendEventModify(action, event) {
+
+    // Workaround: Add a username to the request
+    var request = event.data;
+    request["user"] = current_user;
+    request["action"] = action;
+
+    var client = new HttpClient();
+    client.get("/event-modify", request, function(args){
+
+        var response = JSON.parse(args);
+        var message = response["msg"];
+
+        if (message !== "success"){
+            var modal = new DayPilot.Modal.alert(message);
+        }
+        else{
+            loadExistingEvents();
         }
     });
 }

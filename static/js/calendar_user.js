@@ -146,12 +146,12 @@ dp.onTimeRangeSelected = async args => {
  */
  dp.onEventClick = async args => {
 
-    var ev = args.e.data;
-    if(ev.tags.status === "pending"){
+    var ev = args.e;
+    if(ev.data.tags.status === "pending"){
         var message = "Waiting for admin conformation.";
     }
     else{
-        var message = ev.tags.radio_type + " testbed resources reserved from " + ev.start + " to " + ev.end;
+        var message = ev.data.tags.radio_type + " testbed resources reserved from " + ev.data.start + " to " + ev.data.end;
     }
     //message += "For more info contact the administrator.";
     var modal = new DayPilot.Modal.alert(message);
@@ -243,6 +243,19 @@ dp.init();
 loadExistingEvents();
 
 
+var current_user = "";
+
+var xhttp = new XMLHttpRequest();
+xhttp.onreadystatechange = function() {
+    if(this.readyState == 4 && this.status == 200){
+        var resp = JSON.parse(this.response);
+        current_user = resp["username"];
+    }
+}
+xhttp.open("POST", "/handler", true);
+xhttp.setRequestHeader("Content-Type", "application/json");
+xhttp.send(JSON.stringify({action:"get_current_user", data:{}}));
+
 
 // --------------------------------------------------------------------------------------------------
 // Additional functions 
@@ -271,18 +284,17 @@ loadExistingEvents();
     });
 }
 
-async function sendEventRequest(event, username) {
+async function sendEventRequest(event) {
 
-
+    // Workaround: Add a username to the request
     var request = event.data;
-    request["user"] = $("#username").text();
+    request["user"] = current_user;
 
     var client = new HttpClient();
-    //client.get("/request-event?user=admin", function(response){
-    client.get("/request-event", request, function(args){
+    client.get("/event-request", request, function(args){
 
         var response = JSON.parse(args);
-        var message = response["response_message"];
+        var message = response["msg"];
 
         if (message !== "success"){
             var modal = new DayPilot.Modal.alert(message)
