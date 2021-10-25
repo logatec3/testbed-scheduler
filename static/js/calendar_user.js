@@ -146,12 +146,12 @@ dp.onTimeRangeSelected = async args => {
  */
  dp.onEventClick = async args => {
 
-    var ev = args.e.data;
-    if(ev.tags.status === "pending"){
+    var ev = args.e;
+    if(ev.data.tags.status === "pending"){
         var message = "Waiting for admin conformation.";
     }
     else{
-        var message = ev.tags.radio_type + " testbed resources reserved from " + ev.start + " to " + ev.end;
+        var message = ev.data.tags.radio_type + " testbed resources reserved from " + ev.data.start + " to " + ev.data.end;
     }
     //message += "For more info contact the administrator.";
     var modal = new DayPilot.Modal.alert(message);

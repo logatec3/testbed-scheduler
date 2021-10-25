@@ -156,9 +156,9 @@ dp.onTimeRangeSelected = async args => {
     //message += "For more info contact the administrator.";
     var modal = new DayPilot.Modal.alert(message);
 */
-    var ev = args.e.data;
+    var ev = args.e;
 
-    if(ev.tags.status == "pending"){
+    if(ev.data.tags.status == "pending"){
         var opt = [
             {name: "Confirm request?", id: "confirm"},
             {name: "Delete request?", id: "delete"}
