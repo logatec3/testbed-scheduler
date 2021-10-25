@@ -124,7 +124,33 @@ def checkRequestedEvent(event):
     return "success"
 
 
+def confirmEvent(event, admin):
 
+    printEvents()
+    resources = db["reserved_resources"]
+    query = {"event.id" : event["id"]}
+    conf = {"event.tags.status" : "confirmed"}
+    conf_by = {"confirmed_by" : admin}
+    #conf_date = {}
+
+    resources.update_one(query, conf)
+    resources.update_one(query, conf_by)
+    printEvents()
+    return "success"
+
+def deleteEvent(event):
+    printEvents()
+    resources = db["reserved_resources"]
+    query = {"event.id" : event["id"]}
+    resources.delete_one(query)
+    printEvents()
+    return "success"
+
+
+def printEvents():
+    all = getReservedEvents()
+    for e in all:
+        log.info(e)
 
 # ------------------------------------------------------------------------------------------
 # Flask config
@@ -175,7 +201,7 @@ def update_calendar():
 
 
 # Handle request for new resource reservation
-@app.route("/event-request", methods=["POST"])
+@app.route("/event-request", methods = ["POST"])
 def event_request():
     event = request.get_json()
     username = event.pop("user")
@@ -185,7 +211,7 @@ def event_request():
     if(user):
         usermail = user["mail"]
     else:
-        return jsonify(msg = "User is not authorized")
+        return jsonify(msg = "Username does not exist")
 
 
     # Check if event is within the desired parameters
@@ -206,6 +232,27 @@ def event_request():
     log.info("Request got response: " + resp)
     
     return jsonify(msg = resp)
+
+
+@app.route("/event-modify", methods = ["POST"])
+def event_confirm():
+    event = request.get_json()
+    username = event.pop("user")
+    action = event.pop("action")
+
+    # Check if user has admin rights
+    user = db["users"].find_one({"username":username})
+    if(user):
+        if(user["type"] != "admin"):
+            return jsonify(msg = "User is not authorized")
+
+    if (action == "delete"):
+        resp = deleteEvent(event)
+    elif (action == "confirm"):
+        resp = confirmEvent(event, username)
+
+    return jsonify(msg = resp)
+
 
 
 if __name__ == "__main__":

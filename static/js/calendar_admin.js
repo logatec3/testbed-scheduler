@@ -172,28 +172,26 @@ dp.onTimeRangeSelected = async args => {
         if(modal.canceled){
             return;
         }
-        console.log("Admin selected ");
-        console.log(modal.result.action);
-    
+
+        if(modal.result.action === "confirm"){
+            console.log("Confirm selected resource")
+            sendEventModify("confirm", ev);
+        }
+        else if(modal.result.action === "delete"){
+            console.log("Delete selected resource")
+            sendEventModify("delete", ev);
+        }
     }
     else{
         message = "Would you like to delete reserved resource?"; 
         var modal = await DeyPilot.Modal.confirm(message, {okText:"Yes", cancelText:"No"});
-        if(modal.result){
-            console.log("Admin deleted resource");
-            // TODO Send delete request
+        if(modal.canceled){
+            return;
         }
-        return;        
+        console.log("Delete selected resource");
+        sendEventModify("delete", ev);   
     }
-
-
-    const form = [
-        {name: "Configure resource"},
-        {name: "", id: "action", options: opt}
-    ];
-
-    
- 
+    return;
 };
 
 
@@ -336,12 +334,34 @@ async function sendEventRequest(event) {
         var message = response["msg"];
 
         if (message !== "success"){
-            var modal = new DayPilot.Modal.alert(message)
+            var modal = new DayPilot.Modal.alert(message);
         }
         else{
             dp.events.add(event);
             //dp.events.add(response["response_event"]);
             dp.update();
+        }
+    });
+}
+
+async function sendEventModify(action, event) {
+
+    // Workaround: Add a username to the request
+    var request = event.data;
+    request["user"] = current_user;
+    request["action"] = action;
+
+    var client = new HttpClient();
+    client.get("/event-modify", request, function(args){
+
+        var response = JSON.parse(args);
+        var message = response["msg"];
+
+        if (message !== "success"){
+            var modal = new DayPilot.Modal.alert(message);
+        }
+        else{
+            loadExistingEvents();
         }
     });
 }
