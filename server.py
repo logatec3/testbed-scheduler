@@ -124,18 +124,18 @@ def checkRequestedEvent(event):
     return "success"
 
 
-def confirmEvent(event, admin):
+def confirmResource(event, confirmed_by):
     resources = db["reserved_resources"]
     query = {"event.id" : event["id"]}
     conf = {"$set": {"event.tags.status" : "confirmed"}}
-    conf_by = {"$set": {"confirmed_by" : admin}}
+    conf_by = {"$set": {"confirmed_by" : confirmed_by}}
     #conf_date = {}
 
     resources.update_one(query, conf)
     resources.update_one(query, conf_by)
     return "success"
 
-def deleteEvent(event):
+def deleteResource(event):
     resources = db["reserved_resources"]
     query = {"event.id" : event["id"]}
     r = resources.delete_one(query)
@@ -224,7 +224,7 @@ def event_request():
         if (isResourceFree(resource)):
             # Store new request into database and send email to the user
             db["reserved_resources"].insert_one(resource)
-            #mail.sendReservationSuccess(user, usermail, event)
+            mail.sendReservationSuccess(username, usermail, event)
         else:
             resp = "The resources are already reserved for chosen period!"
 
@@ -244,11 +244,16 @@ def event_confirm():
     if(user):
         if(user["type"] != "admin"):
             return jsonify(msg = "User is not authorized")
+        
+    resource = db["reserved_resources"].find_one({"event.id":event["id"]})
+    r_username = resource["username"]
+    r_usermail = user["mail"]
 
     if (action == "delete"):
-        resp = deleteEvent(event)
+        resp = deleteResource(event)
     elif (action == "confirm"):
-        resp = confirmEvent(event, username)
+        resp = confirmResource(event, username)
+        mail.sendReservationConfirmed(r_username, r_usermail, event)
 
     return jsonify(msg = resp)
 
