@@ -184,7 +184,7 @@ dp.onTimeRangeSelected = async args => {
     }
     else{
         message = "Would you like to delete reserved resource?"; 
-        var modal = await DeyPilot.Modal.confirm(message, {okText:"Yes", cancelText:"No"});
+        var modal = await DayPilot.Modal.confirm(message, {okText:"Yes", cancelText:"No"});
         if(modal.canceled){
             return;
         }
