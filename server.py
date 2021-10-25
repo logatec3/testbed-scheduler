@@ -132,14 +132,16 @@ def confirmEvent(event, admin):
     #conf_date = {}
 
     resources.update_one(query, conf)
-    log.info(resources.update_one(query, conf_by))
-
+    resources.update_one(query, conf_by)
     return "success"
 
 def deleteEvent(event):
     resources = db["reserved_resources"]
     query = {"event.id" : event["id"]}
-    log.info(resources.delete_one(query))
+    r = resources.delete_one(query)
+
+    #if (r.deleted_count != 1):
+    #    return "Internal server error"
 
     return "success"
 
