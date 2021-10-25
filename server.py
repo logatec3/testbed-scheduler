@@ -125,8 +125,6 @@ def checkRequestedEvent(event):
 
 
 def confirmEvent(event, admin):
-
-    printEvents()
     resources = db["reserved_resources"]
     query = {"event.id" : event["id"]}
     conf = {"$set": {"event.tags.status" : "confirmed"}}
@@ -134,16 +132,15 @@ def confirmEvent(event, admin):
     #conf_date = {}
 
     resources.update_one(query, conf)
-    resources.update_one(query, conf_by)
-    printEvents()
+    log.info(resources.update_one(query, conf_by))
+
     return "success"
 
 def deleteEvent(event):
-    printEvents()
     resources = db["reserved_resources"]
     query = {"event.id" : event["id"]}
-    resources.delete_one(query)
-    printEvents()
+    log.info(resources.delete_one(query))
+
     return "success"
 
 

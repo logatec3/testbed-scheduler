@@ -257,7 +257,7 @@ dp.onBeforeEventRender = args => {
         case "pending":
             args.data.fontColor = "#5e6a6e";
             args.data.borderColor = "#5e6a6e";
-            args.data.toolTip =  "Waiting for admin conformation."
+            args.data.toolTip =  "Waiting for your conformation."
             break;
 
         case "confirmed":
