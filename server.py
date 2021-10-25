@@ -129,8 +129,8 @@ def confirmEvent(event, admin):
     printEvents()
     resources = db["reserved_resources"]
     query = {"event.id" : event["id"]}
-    conf = {"event.tags.status" : "confirmed"}
-    conf_by = {"confirmed_by" : admin}
+    conf = {"$set": {"event.tags.status" : "confirmed"}}
+    conf_by = {"$set": {"confirmed_by" : admin}}
     #conf_date = {}
 
     resources.update_one(query, conf)
