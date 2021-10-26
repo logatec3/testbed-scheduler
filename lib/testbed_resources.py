@@ -75,8 +75,9 @@ class testbed_resources():
         resource = self._findResource({"event.id" : event["id"]})
         return resource["owner"]
 
-
+    # ------------------------------------------------------------------------------------------------------------------
     # Resource manipulation (client access)
+
     def storeResource(self, event, owner):
         now = datetime.now().isoformat()
         resource = {
@@ -150,15 +151,15 @@ class testbed_resources():
 
     def isEventFree(self, event):
         type = event.get("event", {}).get("tags", {}).get("radio_type")
-
         events = self.getEventListByType(type)
         events.append(event)
 
-        sorted_events = sorted(events, key = lambda d: d["event"]["start"])
+        # Sort events by start time
+        sorted_events = sorted(events, key = lambda d: d["start"])
 
         # Check for overlaping
         for i in range(1, len(sorted_events)):
-            if sorted_events[i - 1].get("event",{}).get("end",{}) > sorted_events[i].get("event",{}).get("start",{}):
+            if sorted_events[i - 1].get("end",{}) > sorted_events[i].get("start",{}):
                 return False
 
         return True

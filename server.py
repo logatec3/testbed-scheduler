@@ -14,27 +14,27 @@ tr = testbed_resources()
 from lib.testbed_users import testbed_users
 tu = testbed_users()
 
-# ------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------
 # Logging config
-# ------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------
 logging.basicConfig(format="%(asctime)s [%(levelname)7s]:[%(name)5s > %(funcName)17s() > %(lineno)3s] - %(message)s", level=logging.INFO, filename="scheduler.log")
 log = logging.getLogger("Server")
 
-# ------------------------------------------------------------------------------------------
-# Function to send mail in a subprocess
-# ------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------
+# Function to send mail from a subprocess - enables faster HTTP response -> faster GUI
+# --------------------------------------------------------------------------------------------
 def sendMail(type, event):
     res_owner = tr.getResourceOwner(event)
     res_owner_mail = tu.getUserMail(res_owner)
     res_start = event["start"]
     res_end = event["end"]
-    res_type = event["tags.radio_type"]
+    res_type = event["tags"]["radio_type"]
     subprocess.Popen(["python3", "lib/testbed_mail.py", type, res_owner, res_owner_mail, res_start, res_end, res_type])
 
 
-# ------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------
 # Flask config
-# ------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------
 app = Flask(__name__, static_url_path="", static_folder="static", template_folder="templates")
 
 @app.route("/")
@@ -51,7 +51,7 @@ def index():
         templateData = {"username":user, "option":user_type}
         return render_template("index.html", **templateData)
 
-
+# --------------------------------------------------------------------------------------------
 # Serve static files 
 @app.route("/static/js/<path:path>")
 def send_js(path):
@@ -65,7 +65,7 @@ def send_css(path):
 def send_img(path):
     return send_from_directory("static/img/", path)
 
-
+# --------------------------------------------------------------------------------------------
 # Update reserved resource events from the database
 @app.route("/update", methods=["POST"])
 def update_calendar():
@@ -78,7 +78,7 @@ def update_calendar():
 
     return jsonify(events)
 
-
+# --------------------------------------------------------------------------------------------
 # Handle request for new resource reservation
 @app.route("/event-request", methods = ["POST"])
 def event_request():
@@ -98,7 +98,7 @@ def event_request():
     log.info("Request got response: " + resp)
     return jsonify(msg = resp)
 
-
+# --------------------------------------------------------------------------------------------
 # Handle admin modifications
 @app.route("/event-modify", methods = ["POST"])
 def event_confirm():
@@ -115,13 +115,12 @@ def event_confirm():
         resp = tr.confirmResource(event, modifier)
         sendMail("reservation_confirmed", event)
 
-    log.info("Admin " + modifier + action + "ed event with ID " + event["id"])
+    log.info("Admin " + modifier + " " + action + "ed event with ID " + event["id"])
     return jsonify(msg = resp)
 
 
-
-
-
+# --------------------------------------------------------------------------------------------
+# TODO:
 #def admin_rights(func):
 #    @wraps(func)
 #    def check_admin(*args, **kwargs):
@@ -133,6 +132,6 @@ def event_confirm():
 #        return func(*args, **kwargs)
 #    return check_admin
 
-
+# --------------------------------------------------------------------------------------------
 if __name__ == "__main__":
     app.run(host="localhost", port=8002, debug=True)
