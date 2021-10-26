@@ -239,20 +239,18 @@ xhttp.send(JSON.stringify({action:"get_current_user", data:{}}));
 /**
  * Function that sends HTTP GET request
  */
- var HttpClient = function() {
-    this.get = function(url, data, callback) {
-        var httpRequest = new XMLHttpRequest();
-        httpRequest.onreadystatechange = function() { 
-            if (httpRequest.readyState == 4 && httpRequest.status == 200){
-                callback(httpRequest.responseText);
-            }
+ function sendHttpRequest(url, data, callback) {
+    var httpRequest = new XMLHttpRequest();
+    httpRequest.onreadystatechange = function() { 
+        if (httpRequest.readyState == 4 && httpRequest.status == 200){
+            callback(httpRequest.responseText);
         }
-        u = "/scheduler" + url;
-        // u = url; --> LOCAL TEST!
-        httpRequest.open("POST", u, true );            
-        httpRequest.setRequestHeader("Content-Type", "application/json");
-        httpRequest.send(JSON.stringify(data));
     }
+    u = "/scheduler" + url;
+    // u = url; --> LOCAL TEST!
+    httpRequest.open("POST", u, true );            
+    httpRequest.setRequestHeader("Content-Type", "application/json");
+    httpRequest.send(JSON.stringify(data));
 }
 
 /**
@@ -267,8 +265,7 @@ xhttp.send(JSON.stringify({action:"get_current_user", data:{}}));
       end: nav.visibleEnd().toString()
     };
 
-    var client = new HttpClient();
-    client.get("/update", params, function(args){
+    sendHttpRequest("/update", params, function(args){
 
         var response = JSON.parse(args);
         dp.events.list = response;
@@ -284,8 +281,7 @@ async function sendEventRequest(event) {
     var request = event.data;
     request["user"] = current_user;
 
-    var client = new HttpClient();
-    client.get("/event-request", request, function(args){
+    sendHttpRequest("/event-request", request, function(args){
 
         var response = JSON.parse(args);
         var message = response["msg"];
@@ -309,8 +305,7 @@ async function sendEventModify(action, event) {
     request["user"] = current_user;
     request["action"] = action;
 
-    var client = new HttpClient();
-    client.get("/event-modify", request, function(args){
+    sendHttpRequest("/event-modify", request, function(args){
 
         var response = JSON.parse(args);
         var message = response["msg"];
