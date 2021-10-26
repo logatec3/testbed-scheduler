@@ -36,8 +36,8 @@ class testbed_resources():
     def __init__(self):
         self.db = MongoClient(HOSTNAME)["sms"]
         self.resources = self.db["reserved_resources"]    
-        logging.basicConfig(format="%(asctime)s [%(levelname)7s]:[%(name)5s > %(funcName)17s() > %(lineno)3s] - %(message)s", level=LOGGING_LEVEL, filename="testbed_resources.log")
         self.log = logging.getLogger("Resources")
+        self.log.setLevel(LOGGING_LEVEL)
 
     def _findResource(self, query):
         return self.resources.find_one(query)

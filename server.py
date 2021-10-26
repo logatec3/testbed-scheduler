@@ -8,10 +8,10 @@ from pymongo import MongoClient
 from flask import Flask, render_template, send_from_directory, jsonify, request
 from flask.helpers import url_for
 
-from testbed_resources import testbed_resources
+from lib.testbed_resources import testbed_resources
 tr = testbed_resources()
 
-from testbed_users import testbed_users
+from lib.testbed_users import testbed_users
 tu = testbed_users()
 
 # ------------------------------------------------------------------------------------------
@@ -29,7 +29,7 @@ def sendMail(type, event):
     res_start = event["start"]
     res_end = event["end"]
     res_type = event["tags.radio_type"]
-    subprocess.Popen(["python3", "testbed_mail.py", type, res_owner, res_owner_mail, res_start, res_end, res_type])
+    subprocess.Popen(["python3", "lib/testbed_mail.py", type, res_owner, res_owner_mail, res_start, res_end, res_type])
 
 
 # ------------------------------------------------------------------------------------------
