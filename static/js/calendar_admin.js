@@ -45,7 +45,7 @@ var today = new Date().toISOString();
 dp.startDate = today;
 
 // Locale sets the view of the calendar (Mon first)
-//dp.locale = "en-gb";
+dp.locale = "en-gb";
 
 // Disable moving the events and stuff
 dp.eventMoveHandling = "Disabled";
@@ -165,7 +165,7 @@ dp.onBeforeEventRender = args => {
 
     switch (type) {
         case "SRDA":    // blue
-            args.data.backColor = (status === "confirmed") ? "#3465a4" : "8badda";
+            args.data.backColor = (status === "confirmed") ? "#3465a4" : "#8badda";
             break;
 
         case "SRDB":    // yellow
@@ -197,7 +197,11 @@ dp.onBeforeEventRender = args => {
         case "confirmed":
             args.data.fontColor = "black";
             args.data.borderColor = "black";
-            args.data.toolTip = "Resources reserved from: " + args.data.start + " to " + args.data.end + ".";
+            s = args.data.start;
+            e = args.data.end;
+            e = e.toString().substring(0, 10);
+            s = s.toString().substring(0,10);
+            args.data.toolTip = "Resources reserved from: " + s + " to " + e + ".";
             break;
     	default:
 	    break;
