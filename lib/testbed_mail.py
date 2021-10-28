@@ -5,6 +5,7 @@
 import os, sys
 import smtplib
 import logging
+from datetime import datetime
 
 log = logging.getLogger("Mail")
 log.setLevel(logging.WARNING)
@@ -84,12 +85,18 @@ except:
     logging.warning("Check input parameters! Aborting")
     sys.exit()
 
+# Convert dates into readable format
+start = datetime.fromisoformat(resource_start)
+end = datetime.fromisoformat(resource_end)
+start = start.date().strftime("%d %B, %Y")
+end = end.date().strftime("%d %B, %Y")
+
 # ------------------------------------------------------------------------------------------------------------------
 # Check input request
 if(message_type == "reservation_confirmed"):
-    message = MSG_CONF%(receiver_name, receiver_mail, receiver_name, resource_type, resource_start, resource_end)
+    message = MSG_CONF%(receiver_name, receiver_mail, receiver_name, resource_type, start, end)
 elif(message_type == "reservation_success"):
-    message = MSG_SUCC%(receiver_name, receiver_mail, receiver_name, resource_type, resource_start, resource_end)
+    message = MSG_SUCC%(receiver_name, receiver_mail, receiver_name, resource_type, start, end)
 else:
     sys.exit()
 # ------------------------------------------------------------------------------------------------------------------
