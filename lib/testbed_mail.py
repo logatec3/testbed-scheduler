@@ -20,7 +20,7 @@ Subject: Testbed resource reservation
 
 Hello %s!
 Your reservation request for LOG-a-TEC testbed was accepted by the server.
-We kindly ask to wait for admin conformation.
+We kindly ask to wait for admin confirmation.
 
 Technology: %s
 Reserved from: %s
