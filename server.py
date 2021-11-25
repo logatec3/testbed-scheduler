@@ -41,15 +41,16 @@ app = Flask(__name__, static_url_path="", static_folder="static", template_folde
 def index():
     # Finta u levu: ime shrani v span z id-jom username in za admina vrni drugi JS fajl
     user = request.args.get("u")
-    log.info(user + " accessed the scheduler app.")
+    if(user):
+        log.info(user + " accessed the scheduler app.")
 
-    user_type = tu.getUserType(user)
+        user_type = tu.getUserType(user)
 
-    if(user_type == "unknown"):
-        return "<h1>Unauthorized access</h1>"
-    else:
-        templateData = {"username":user, "option":user_type}
-        return render_template("index.html", **templateData)
+        if(user_type != "unknown"):
+            templateData = {"username":user, "option":user_type}
+            return render_template("index.html", **templateData)
+
+    return "<h1>Unauthorized access</h1>"
 
 # --------------------------------------------------------------------------------------------
 # Serve static files 
