@@ -92,7 +92,9 @@ class testbed_resources():
 
     def isResourceFree(self, event):
         #1 Check if event is in the past
-        if event["start"] < datetime.now().isoformat():
+        yesterday = datetime.now() - timedelta(days = 1)
+        yesterday = yesterday.isoformat()
+        if event["start"] < yesterday:
             return "Can't reserve resources in the past"
         
         #2 Check if start is more than half a year in the future
